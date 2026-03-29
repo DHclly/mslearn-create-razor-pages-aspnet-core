@@ -1,0 +1,149 @@
+@page
+@model ContosoPizza.Pages.OrderModel
+@{
+    ViewData["Title"] = "下单 🛒";
+}
+
+@* TempData：跨请求传递一次性消息，RedirectToPage 后仍能读取，读完自动清除 *@
+@if (TempData["OrderMsg"] != null)
+{
+    <div class="alert alert-success">@TempData["OrderMsg"]</div>
+}
+@if (TempData["CouponMsg"] != null)
+{
+    <div class="alert alert-info">@TempData["CouponMsg"]</div>
+}
+
+<h1>下单 🛒</h1>
+
+<div class="row g-4">
+    <div class="col-md-7">
+
+        @* ===== 表单一：搜索披萨（GET，SupportsGet = true）=====
+           method="get" 提交后跳转到 /Order?SearchKeyword=xxx，触发 OnGet()
+           SearchKeyword 因为 SupportsGet=true，GET 时会自动从 URL 参数绑定 *@
+        <div class="card mb-3">
+            <div class="card-header">选择披萨</div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="input-group mb-3">
+                        <input asp-for="SearchKeyword" class="form-control" placeholder="搜索披萨名称..." />
+                        <button type="submit" class="btn btn-outline-secondary">搜索</button>
+                        <a asp-page="Order" class="btn btn-outline-danger">清除</a>
+                    </div>
+                </form>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>@Html.DisplayNameFor(m => m.PizzaList[0].Name)</th>
+                            <th>@Html.DisplayNameFor(m => m.PizzaList[0].Size)</th>
+                            <th>@Html.DisplayNameFor(m => m.PizzaList[0].Price)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var pizza in Model.PizzaList)
+                    {
+                        <tr>
+                            <td>@pizza.Name</td>
+                            <td>@pizza.Size</td>
+                            <td>@($"{pizza.Price:C}")</td>
+                        </tr>
+                    }
+                    @if (!Model.PizzaList.Any())
+                    {
+                        <tr><td colspan="3" class="text-muted">没有找到匹配的披萨</td></tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* ===== 表单二：优惠券（独立 handler：OnPostApplyCoupon）=====
+           asp-page-handler="ApplyCoupon" 让这个表单提交到 OnPostApplyCoupon()
+           只有 CouponCode 被绑定，NewOrder 不参与，不会产生验证冲突 *@
+        <div class="card mb-3">
+            <div class="card-header">优惠券</div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="ApplyCoupon">
+                    @* 隐藏字段：把当前搜索关键词随表单一起提交，POST 后 redirect 时带回 URL *@
+                    <input type="hidden" asp-for="SearchKeyword" />
+                    <div class="input-group">
+                        <input asp-for="CouponCode" class="form-control" placeholder="输入优惠券码（试试 PIZZA10 或 PIZZA20）" />
+                        <button type="submit" class="btn btn-outline-primary">应用</button>
+                    </div>
+                    <span asp-validation-for="CouponCode" class="text-danger"></span>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-5">
+
+        @* ===== 表单三：提交订单（默认 handler：OnPost）=====
+           没有 asp-page-handler，提交到默认的 OnPost()
+           只有 NewOrder 被绑定，CouponCode 不参与 *@
+        <div class="card">
+            <div class="card-header">填写配送信息</div>
+            <div class="card-body">
+                <form method="post">
+                    @* 隐藏字段：把当前搜索关键词随表单一起提交，POST 后 redirect 时带回 URL *@
+                    <input type="hidden" asp-for="SearchKeyword" />
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                    <div class="mb-2">
+                        <label asp-for="NewOrder.CustomerName" class="form-label"></label>
+                        <input asp-for="NewOrder.CustomerName" class="form-control" />
+                        <span asp-validation-for="NewOrder.CustomerName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-2">
+                        <label asp-for="NewOrder.Phone" class="form-label"></label>
+                        <input asp-for="NewOrder.Phone" class="form-control" />
+                        <span asp-validation-for="NewOrder.Phone" class="text-danger"></span>
+                    </div>
+                    <div class="mb-2">
+                        <label asp-for="NewOrder.Address" class="form-label"></label>
+                        <textarea asp-for="NewOrder.Address" class="form-control" rows="2"></textarea>
+                        <span asp-validation-for="NewOrder.Address" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">提交订单</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@* ===== 订单历史 ===== *@
+@if (Model.OrderList.Any())
+{
+    <h4 class="mt-5">订单历史</h4>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>@Html.DisplayNameFor(m => m.OrderList[0].CustomerName)</th>
+                <th>@Html.DisplayNameFor(m => m.OrderList[0].Phone)</th>
+                <th>@Html.DisplayNameFor(m => m.OrderList[0].Address)</th>
+                <th>@Html.DisplayNameFor(m => m.OrderList[0].CouponCode)</th>
+                <th>@Html.DisplayNameFor(m => m.OrderList[0].Discount)</th>
+                <th>@Html.DisplayNameFor(m => m.OrderList[0].CreatedAt)</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var order in Model.OrderList)
+        {
+            <tr>
+                <td>@order.CustomerName</td>
+                <td>@order.Phone</td>
+                <td>@order.Address</td>
+                <td>@(order.CouponCode ?? "-")</td>
+                <td>@(order.Discount > 0 ? $"{order.Discount * 100}%" : "-")</td>
+                <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

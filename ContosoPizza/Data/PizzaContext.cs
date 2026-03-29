@@ -18,5 +18,8 @@ namespace ContosoPizza.Data
         // 通过 _context.Pizzas 就可以对 Pizza 表进行增删改查
         // 加 ? 是因为数据库可能还没初始化，允许为 null
         public DbSet<ContosoPizza.Models.Pizza>? Pizzas { get; set; }
+
+        // Orders 表，对应 Order 模型
+        public DbSet<ContosoPizza.Models.Order>? Orders { get; set; }
     }
 }

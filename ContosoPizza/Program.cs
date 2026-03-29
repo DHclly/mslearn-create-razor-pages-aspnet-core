@@ -17,6 +17,7 @@ builder.Services.AddDbContext<PizzaContext>(options =>
 
 // 注册 PizzaService，Scoped 表示每次 HTTP 请求创建一个新实例，请求结束后销毁
 builder.Services.AddScoped<PizzaService>();
+builder.Services.AddScoped<OrderService>();
 
 var app = builder.Build();
 

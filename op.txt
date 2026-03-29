@@ -1,0 +1,3 @@
+dotnet watch
+
+dotnet new page --name PizzaList --namespace ContosoPizza.Pages --output Pages

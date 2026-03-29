@@ -1,0 +1,69 @@
+@page
+@model ContosoPizza.Pages.Orders.IndexModel
+@{
+    ViewData["Title"] = "订单管理 📋";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>订单管理 📋</h1>
+    <a asp-page="Create" class="btn btn-primary">+ 新建订单</a>
+</div>
+
+@if (TempData["Msg"] != null)
+{
+    <div class="alert alert-success">@TempData["Msg"]</div>
+}
+
+@if (!Model.OrderList.Any())
+{
+    <p class="text-muted">暂无订单，<a asp-page="Create">立即下单</a></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>订单号</th>
+                <th>客户</th>
+                <th>电话</th>
+                <th>地址</th>
+                <th>披萨明细</th>
+                <th>优惠券</th>
+                <th>总金额</th>
+                <th>下单时间</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        @foreach (var order in Model.OrderList)
+        {
+            <tr>
+                <td>#@order.Id</td>
+                <td>@order.Customer.Name</td>
+                <td>@order.Customer.Phone</td>
+                <td>@order.Customer.Address</td>
+                <td>
+                    @foreach (var item in order.Items)
+                    {
+                        <div>@item.Pizza.Name × @item.Quantity（@($"{item.Subtotal:C}")）</div>
+                    }
+                </td>
+                <td>
+                    @if (!string.IsNullOrEmpty(order.CouponCode))
+                    {
+                        <span class="badge bg-info">@order.CouponCode (-@(order.Discount * 100)%)</span>
+                    }
+                    else { <span class="text-muted">-</span> }
+                </td>
+                <td>@($"{order.TotalAmount:C}")</td>
+                <td>@order.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                <td>
+                    <form method="post" asp-page-handler="Delete" asp-route-id="@order.Id">
+                        <button class="btn btn-sm btn-outline-danger">删除</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

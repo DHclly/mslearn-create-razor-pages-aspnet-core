@@ -1,0 +1,96 @@
+@page
+@model ContosoPizza.Pages.Customers.IndexModel
+@{
+    ViewData["Title"] = "客户管理 👤";
+}
+
+<h1>客户管理 👤</h1>
+
+@if (TempData["Msg"] != null)
+{
+    <div class="alert alert-success">@TempData["Msg"]</div>
+}
+
+<form method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="row g-2 align-items-start mb-4">
+        <div class="col-md-3">
+            <label asp-for="NewCustomer.Name" class="form-label"></label>
+            <input asp-for="NewCustomer.Name" class="form-control" />
+            <span asp-validation-for="NewCustomer.Name" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label asp-for="NewCustomer.Phone" class="form-label"></label>
+            <input asp-for="NewCustomer.Phone" class="form-control" />
+            <span asp-validation-for="NewCustomer.Phone" class="text-danger"></span>
+        </div>
+        <div class="col-md-4">
+            <label asp-for="NewCustomer.Address" class="form-label"></label>
+            <input asp-for="NewCustomer.Address" class="form-control" />
+            <span asp-validation-for="NewCustomer.Address" class="text-danger"></span>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">&nbsp;</label>
+            <input type="submit" value="添加" class="btn btn-primary w-100 d-block" />
+        </div>
+    </div>
+</form>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>@Html.DisplayNameFor(m => m.NewCustomer.Name)</th>
+            <th>@Html.DisplayNameFor(m => m.NewCustomer.Phone)</th>
+            <th>@Html.DisplayNameFor(m => m.NewCustomer.Address)</th>
+            <th>@Html.DisplayNameFor(m => m.NewCustomer.CreatedAt)</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var customer in Model.CustomerList)
+    {
+        <tr>
+            <td>@customer.Name</td>
+            <td>@customer.Phone</td>
+            <td>@customer.Address</td>
+            <td>@customer.CreatedAt.ToString("yyyy-MM-dd")</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" type="button" onclick="toggleEdit(@customer.Id)">编辑</button>
+                <form method="post" asp-page-handler="Delete" asp-route-id="@customer.Id" class="d-inline">
+                    <button class="btn btn-sm btn-outline-danger">删除</button>
+                </form>
+            </td>
+        </tr>
+        <tr id="edit-@customer.Id" style="display:none" class="table-light">
+            <td colspan="5">
+                <form method="post" class="row g-2 align-items-end p-2">
+                    <input type="hidden" name="NewCustomer.Id" value="@customer.Id" />
+                    <div class="col-md-3">
+                        <input name="NewCustomer.Name" value="@customer.Name" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-2">
+                        <input name="NewCustomer.Phone" value="@customer.Phone" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-4">
+                        <input name="NewCustomer.Address" value="@customer.Address" class="form-control form-control-sm" required />
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-sm btn-primary">保存</button>
+                        <button type="button" class="btn btn-sm btn-secondary" onclick="toggleEdit(@customer.Id)">取消</button>
+                    </div>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        function toggleEdit(id) {
+            const row = document.getElementById('edit-' + id);
+            row.style.display = row.style.display === 'none' ? '' : 'none';
+        }
+    </script>
+}

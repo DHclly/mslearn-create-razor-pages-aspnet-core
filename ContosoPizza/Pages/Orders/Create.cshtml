@@ -1,0 +1,127 @@
+@page
+@model ContosoPizza.Pages.Orders.CreateModel
+@{
+    ViewData["Title"] = "新建订单";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>新建订单</h1>
+    <a asp-page="Index" class="btn btn-outline-secondary">← 返回列表</a>
+</div>
+
+@if (TempData["CouponMsg"] != null)
+{
+    <div class="alert alert-info">@TempData["CouponMsg"]</div>
+}
+
+@if (TempData["Debug"] != null)
+{
+    <div class="alert alert-warning">调试：@TempData["Debug"]</div>
+}
+
+<div class="row g-4">
+    <div class="col-md-8">
+
+        @* ===== 选择客户（SupportsGet=true，切换客户后保持页面状态）===== *@
+        <div class="card mb-3">
+            <div class="card-header">1. 选择客户</div>
+            <div class="card-body">
+                <form method="get">
+                    <div class="row g-2 align-items-end">
+                        <div class="col-md-8">
+                            <label asp-for="SelectedCustomerId" class="form-label">客户</label>
+                            <select asp-for="SelectedCustomerId" asp-items="Model.CustomerOptions" class="form-select">
+                                <option value="0">-- 请选择客户 --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-outline-secondary w-100">确认选择</button>
+                        </div>
+                    </div>
+                </form>
+                @if (Model.SelectedCustomerId > 0)
+                {
+                    <div class="mt-2 text-success">✔ 已选择客户</div>
+                }
+            </div>
+        </div>
+
+        @* ===== 选择披萨（主表单，OnPost）===== *@
+        <div class="card mb-3">
+            <div class="card-header">2. 选择披萨</div>
+            <div class="card-body">
+                <form method="post">
+                    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+                    <input type="hidden" asp-for="SelectedCustomerId" />
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>名称</th>
+                                <th>尺寸</th>
+                                <th>单价</th>
+                                <th>数量</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @for (int i = 0; i < Model.PizzaList.Count; i++)
+                        {
+                            var pizza = Model.PizzaList[i];
+                            <tr>
+                                <td>@pizza.Name</td>
+                                <td>@pizza.Size</td>
+                                <td>@($"{pizza.Price:C}")</td>
+                                <td>
+                                    <input type="hidden" name="Items[@i].PizzaId" value="@pizza.Id" />
+                                    <input type="number" name="Items[@i].Quantity" value="0"
+                                           min="0" max="99" class="form-control form-control-sm" style="width:80px" />
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                    <button type="submit" class="btn btn-primary">提交订单</button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-md-4">
+
+        @* ===== 优惠券（独立 handler：OnPostApplyCoupon）===== *@
+        <div class="card mb-3">
+            <div class="card-header">优惠券</div>
+            <div class="card-body">
+                @if (Model.Discount > 0)
+                {
+                    <div class="alert alert-success py-2">
+                        已享 @(Model.Discount * 100)% 折扣
+                    </div>
+                }
+                <form method="post" asp-page-handler="ApplyCoupon">
+                    <input type="hidden" asp-for="SelectedCustomerId" />
+                    <div class="input-group">
+                        <input asp-for="CouponCode" class="form-control" placeholder="PIZZA10 / PIZZA20" />
+                        <button type="submit" class="btn btn-outline-primary">应用</button>
+                    </div>
+                    <span asp-validation-for="CouponCode" class="text-danger"></span>
+                </form>
+            </div>
+        </div>
+
+        @* ===== 说明 ===== *@
+        <div class="card">
+            <div class="card-header">说明</div>
+            <div class="card-body small text-muted">
+                <p>1. 先选择客户，点击"确认选择"</p>
+                <p>2. 可选填优惠券码</p>
+                <p>3. 填写各披萨数量（0 表示不选），点击"提交订单"</p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

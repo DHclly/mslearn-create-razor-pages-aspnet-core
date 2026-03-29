@@ -1,47 +1,59 @@
 using ContosoPizza.Data;
 using ContosoPizza.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace ContosoPizza.Services
 {
-    // 订单服务层：封装订单相关的业务逻辑和数据库操作
-    // 页面（PageModel）通过注入此服务来操作数据，不直接接触 DbContext
     public class OrderService
     {
         private readonly PizzaContext _context;
 
-        // 构造函数注入：Program.cs 注册后，ASP.NET Core 自动传入
         public OrderService(PizzaContext context)
         {
             _context = context;
         }
 
-        // 查询所有订单，按下单时间倒序排列
+        // 查询所有订单，Include 关联的客户和明细（EF Core 的预加载）
         public IList<Order> GetOrders()
-        {
-            if (_context.Orders != null)
-                return _context.Orders.OrderByDescending(o => o.CreatedAt).ToList();
-            return new List<Order>();
-        }
+            => _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.Items).ThenInclude(i => i.Pizza)
+                .OrderByDescending(o => o.CreatedAt)
+                .ToList();
 
-        // 新增订单，保存到数据库
+        // 查询单个订单
+        public Order? GetOrder(int id)
+            => _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.Items).ThenInclude(i => i.Pizza)
+                .FirstOrDefault(o => o.Id == id);
+
+        // 新增订单（含明细）
         public void AddOrder(Order order)
         {
-            if (_context.Orders != null)
+            _context.Orders.Add(order);
+            _context.SaveChanges();
+        }
+
+        // 删除订单（EF Core 级联删除会自动删除 OrderItems）
+        public void DeleteOrder(int id)
+        {
+            var order = _context.Orders.Find(id);
+            if (order != null)
             {
-                _context.Orders.Add(order);
+                _context.Orders.Remove(order);
                 _context.SaveChanges();
             }
         }
 
         // 验证优惠券码，返回折扣比例（0 表示无效）
-        // 实际项目可以从数据库读取优惠券表，这里用固定值演示
         public decimal ValidateCoupon(string couponCode)
         {
             return couponCode.ToUpper() switch
             {
-                "PIZZA10" => 0.1m,  // 九折，优惠 10%
-                "PIZZA20" => 0.2m,  // 八折，优惠 20%
-                _ => 0m             // 无效
+                "PIZZA10" => 0.1m,
+                "PIZZA20" => 0.2m,
+                _ => 0m
             };
         }
     }
